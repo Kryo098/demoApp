@@ -2,20 +2,34 @@ version: "3.8"
 
 services:
   backend:
-    build: ./backend
-    command: uvicorn app.main:app --root-path /api --proxy-headers --host 0.0.0.0 --port 8000
+    build: ./backend # Dockerfileがあるディレクトリを指定
+    command: uvicorn app.main:app --root-path /api --proxy-headers --host 0.0.0.0 --port 8000 # コンテナ起動時に実行するコマンドを指定
 
   frontend:
-    build: ./frontend
+    build: ./frontend # Dockerfileがあるディレクトリを指定
     ports:
-      - "8080:80"
+      - "8080:80" # ホストの8080ポートにコンテナの80ポートをマッピング
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy-data:/data
-      - caddy-config:/config
+      - ./Caddyfile:/etc/caddy/Caddyfile # Caddyfileをマウント
+      - caddy-data:/data # Caddyの証明書を保存するディレクトリをマウント
+      - caddy-config:/config # Caddyの設定ファイルを保存するディレクトリをマウント
     depends_on:
-      - backend
+      - backend # backendが起動してから起動する
+
+  db:
+    image: mysql:8.0 # Docker Hubからイメージを取得
+    platform: linux/x86_64 # プラットフォームを指定
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes" # パスワードを空にする
+      MYSQL_DATABASE: "demo" # データベース名を指定
+      TZ: "Asia/Tokyo" # タイムゾーンを指定
+    volumes:
+      - mysql_data:/var/lib/mysql # データを永続化するためにボリュームをマウント
+    command: --default-authentication-plugin=mysql_native_password # 認証プラグインを指定
+    ports:
+      - 33306:3306 # ホストの33306ポートにコンテナの3306ポートをマッピング
 
 volumes:
-  caddy-data:
-  caddy-config:
+  mysql_data: # MySQLのデータを永続化するためのボリューム
+  caddy-data: # Caddyの証明書を保存するディレクトリを永続化するためのボリューム
+  caddy-config: # Caddyの設定ファイルを保存するディレクトリを永続化するためのボリューム

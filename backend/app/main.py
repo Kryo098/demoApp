@@ -4,9 +4,6 @@ from datetime import datetime
 app = FastAPI()
 
 
-@app.get("/day", tags=["Dates"])
-def get_day_of_week():
-    """
-    Get the current day of week
-    """
-    return datetime.now().strftime("%A")
+@app.get("/day")
+async def get_day():
+    return {"day": datetime.now().day}
